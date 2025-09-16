@@ -2,21 +2,45 @@ from dotenv import load_dotenv
 import discord  
 from discord.ext import commands, tasks
 import os
+from flask import Flask
+from threading import Thread
 
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Le bot est en ligne !"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+
+
+###########################################                          
+#                 MEHTODE                 #
+###########################################
 user_vocal_channels = {}
-
 
 ID_SALON_MEMBRES = 1417326109980360884
 ID_SALON_VOCAL = 1417326216620277922
 ID_SALON_NOM_SERVEUR = 1417326990515634328
 
-role_id = 1417281361127149642  # Remplace par ton vrai ID de rôle
+role_id = 1417281361127149642 
 
 
 intents = discord.Intents.all()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="+", intents=intents)
+
+###########################################                          
+#             DEMARRAGE DU BOT            #
+###########################################
 
 @bot.event
 async def on_ready():
@@ -25,6 +49,7 @@ async def on_ready():
     print(f'{bot.user} est en ligne ✅')
 
     await bot.change_presence(activity=discord.Streaming(name="sur /Kawazu", url="https://twitch.tv/kawazu"))
+
 
 ###########################################                          
 #             GESTION ERROR               #
@@ -110,13 +135,6 @@ async def clear(ctx, amount: int):
 #          SYSTEM STATISTIQUE AUTO         #
 ############################################
 
-
-ID_SALON_MEMBRES = 1417326109980360884
-ID_SALON_VOCAL = 1417326216620277922
-ID_SALON_NOM_SERVEUR = 1417326990515634328
-
-
-
 @tasks.loop(minutes=1)  # met à jour toutes les 1 min
 async def update_stats():
     guild = bot.guilds[0]  # le premier serveur où le bot est
@@ -162,6 +180,11 @@ async def on_voice_state_update(member, before, after):
         if len(before.channel.members) == 0:
             await before.channel.delete()
 
+
+###########################################                          
+#             COMMANDE LOCKVC             #
+###########################################
+
 @bot.command()
 async def lockvc(ctx):
     channel_id = user_vocal_channels.get(ctx.author.id)
@@ -176,6 +199,10 @@ async def lockvc(ctx):
 
     await channel.set_permissions(ctx.guild.default_role, connect=False)
     await ctx.send("🔒 Ton salon vocal est maintenant verrouillé.")
+
+###########################################                          
+#             COMMANDE UNLOCKVC           #
+###########################################
 
 @bot.command()
 async def unlockvc(ctx):
@@ -192,4 +219,5 @@ async def unlockvc(ctx):
     await channel.set_permissions(ctx.guild.default_role, connect=True)
     await ctx.send("🔓 Ton salon vocal est maintenant déverrouillé.")
 
-bot.run("MTE2NDIyODgzMjEwNzE2Nzc3NA.G0YJ_4.olkfCCRi7vuzoV3QIn5gRfI-e2eghyR2SVE7ks")
+keep_alive()
+bot.run("")
